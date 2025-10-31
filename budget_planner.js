@@ -1,71 +1,42 @@
-// =========================
-// 🚀 Travel Planner Backend
-// =========================
-
-// --- Constants ---
-// ⚠️ PASTE YOUR NEW, SECRET KEY HERE (DO NOT SHARE IT)
 const API_KEY = "AIzaSyCOB8pPmr3BPmacOz-pmGA8ITik5ZFQzvQ"; 
-// --- FIX #1: Corrected model to gemini-2.0 ---
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
 
 // --- Page Navigation (Updated) ---
 function showMainPage() {
-    // Hide landing page
     document.getElementById('landingPage').style.display = 'none';
-    
-    // Show the main app navbar
     document.getElementById('appNavbar').style.display = 'flex';
-    
-    // Show the main page content
     document.getElementById('mainPageContent').style.display = 'block';
-    
-    // Hide the results page content
     document.getElementById('resultsPageContent').style.display = 'none';
-
-    // Reset the form when going back
     document.getElementById('travelForm').reset();
     document.getElementById('itineraryContent').innerHTML = '<div class="loading">Processing your request...</div>';
     document.getElementById('budgetBreakdown').style.display = 'none';
 }
 
 function showResultsPage() {
-    // Hide landing page
     document.getElementById('landingPage').style.display = 'none';
-
-    // Show the main app navbar
     document.getElementById('appNavbar').style.display = 'flex';
-
-    // Hide the main page content
     document.getElementById('mainPageContent').style.display = 'none';
-    
-    // Show the results page content
     document.getElementById('resultsPageContent').style.display = 'block';
 }
 
-// --- FIX #2: REMOVED the duplicate, incorrect showResultsPage function ---
 
-
-// --- FIX #3: Renamed estimate functions for clarity ---
 function estimateAccommodationCost(type, duration) {
     let dailyRate = 0;
-    if (type === 'budget') dailyRate = 800;  // Was 1200
-    else if (type === 'mid-range') dailyRate = 2000; // Was 3000
-    else if (type === 'luxury') dailyRate = 5000; // Was 8000
+    if (type === 'budget') dailyRate = 800;
+    else if (type === 'mid-range') dailyRate = 2000;
+    else if (type === 'luxury') dailyRate = 5000;
     return dailyRate * duration;
 }
 
 function estimateFoodCost(duration, travelers) {
-    // A rough estimate of ₹600 per person per day
-    return 600 * duration * travelers; // Was 800
+    return 600 * duration * travelers;
 }
 
 function estimateTransportCost(duration, travelers) {
-    // A rough estimate for local transport (taxis, ferries)
-    return 300 * duration * travelers; // Was 500
+    return 300 * duration * travelers;
 }
 
-// --- Form Submission Handler (Updated Logic) ---
 async function handleSubmit(e) {
     e.preventDefault();
 
@@ -80,40 +51,32 @@ async function handleSubmit(e) {
         preferences: document.getElementById('preferences').value
     };
 
-    // Show summary and loading
     displaySummary(formData);
-    showResultsPage(); // This now calls the one, correct function
+    showResultsPage();
     document.getElementById('itineraryContent').innerHTML = '<div class="loading">Generating activity list from AI...</div>';
-    document.getElementById('budgetBreakdown').style.display = 'none'; // Hide budget
+    document.getElementById('budgetBreakdown').style.display = 'none';
 
     try {
-        // --- STEP 1: Estimate fixed costs ---
         const accommodationCost = estimateAccommodationCost(formData.accommodation, formData.duration);
         const foodCost = estimateFoodCost(formData.duration, formData.travelers);
         const transportCost = estimateTransportCost(formData.duration, formData.travelers);
         const fixedCosts = accommodationCost + foodCost + transportCost;
 
-        // --- STEP 2: Calculate remaining budget for Knapsack ---
         const activityBudget = formData.budget - fixedCosts;
 
         if (activityBudget <= 0) {
-            // This is the error you saw. It's correct!
             throw new Error(`Your budget (₹${formData.budget}) is too low to cover estimated fixed costs of ₹${fixedCosts} (accommodation, food, transport). Please increase your budget.`);
         }
         
         document.getElementById('itineraryContent').innerHTML = `<div class="loading">Fixed costs estimated at ₹${fixedCosts}.<br/>Running Knapsack algorithm with remaining activity budget of ₹${activityBudget}...</div>`;
 
-        // --- STEP 3: Fetch activities from AI ---
         const allActivities = await fetchActivitiesFromAI(formData.destination, activityBudget, formData.specificSpots);
 
-        // --- STEP 4: Run the Knapsack Algorithm ---
         const { selectedItems, totalValue, totalCost: knapsackActivityCost } = solveKnapsack(allActivities, activityBudget);
 
         if (selectedItems.length === 0) {
              throw new Error(`No activities could be selected with your remaining budget of ₹${activityBudget}. Try increasing your budget.`);
         }
-
-        // --- STEP 5: Display Results ---
         displayItinerary(
             selectedItems,
             formData.duration,
@@ -198,64 +161,52 @@ async function fetchActivitiesFromAI(destination, activityBudget, specificSpots)
     }
 }
 
-// --- RESTORED: The 0/1 Knapsack Algorithm ---
 function solveKnapsack(items, capacity) {
     const n = items.length;
-    // dp[i][w] will store the maximum value that can be attained with a capacity of w,
-    // using only items from 1 to i.
     const dp = Array(n + 1).fill(0).map(() => Array(capacity + 1).fill(0));
 
     for (let i = 1; i <= n; i++) {
         const { cost, value } = items[i - 1];
-        // Ensure cost is a number, default to 0 if not
         const itemCost = Number(cost) || 0;
         const itemValue = Number(value) || 0;
 
         for (let w = 0; w <= capacity; w++) {
-            if (itemCost <= w && itemCost > 0) { // Added itemCost > 0 to prevent infinite loops if cost is 0
-                // We have two choices:
-                // 1. Don't include item i:  value is dp[i-1][w]
-                // 2. Include item i:       value is itemValue + dp[i-1][w - itemCost]
+            if (itemCost <= w && itemCost > 0) {
                 dp[i][w] = Math.max(dp[i - 1][w], itemValue + dp[i - 1][w - itemCost]);
             } else {
-                // We can't include item i, so the value is the same as without it.
                 dp[i][w] = dp[i - 1][w];
             }
         }
     }
 
-    // --- Backtrack to find selected items ---
     const selectedItems = [];
     let totalValue = dp[n][capacity];
     let totalCost = 0;
-    let w = capacity; // Start with full capacity
+    let w = capacity;
 
     for (let i = n; i > 0 && totalValue > 0; i--) {
-        // If the value is different from the row above, it means we *included* item i
         if (dp[i][w] !== dp[i - 1][w]) {
             const item = items[i - 1];
             const itemCost = Number(item.cost) || 0;
             const itemValue = Number(item.value) || 0;
             
-            // Ensure item has value and valid cost before adding
             if (itemValue > 0 && itemCost > 0) {
                 selectedItems.push(item);
                 totalValue -= itemValue;
                 totalCost += itemCost;
-                w -= itemCost; // Reduce remaining capacity
+                w -= itemCost;
             }
         }
     }
 
     return { 
-        selectedItems: selectedItems.reverse(), // Show in original order
+        selectedItems: selectedItems.reverse(),
         totalValue: dp[n][capacity],
         totalCost: totalCost 
     };
 }
 
 
-// --- Display Trip Summary ---
 function displaySummary(data) {
     const summaryHTML = `
         <div class="summary-item">
@@ -279,7 +230,6 @@ function displaySummary(data) {
 }
 
 
-// --- STEP 3: Display Itinerary Results (Updated) ---
 function displayItinerary(selectedItems, duration, totalValue, totalCost, numActivities, activityBudget) {
     
     let itineraryHTML = '';
@@ -321,7 +271,6 @@ function displayItinerary(selectedItems, duration, totalValue, totalCost, numAct
         `;
     }
 
-    // --- NEW: Add Algorithm Analysis Section ---
     itineraryHTML += `
         <div class="tips-section" style="background: #e6f7ff; border-left-color: #1890ff;">
             <h4 style="color: #0056b3;">🧠 Algorithm Analysis</h4>
@@ -348,12 +297,11 @@ function displayItinerary(selectedItems, duration, totalValue, totalCost, numAct
     document.getElementById('itineraryContent').innerHTML = itineraryHTML;
 }
 
-// --- NEW: Separate function for Budget Breakdown ---
 function displayBudgetBreakdown(accommodation, food, transport, activities, totalBudget) {
     
     const fixedCosts = accommodation + food + transport;
     const totalSpent = fixedCosts + activities;
-    const miscellaneous = totalBudget - totalSpent; // This can be negative if over budget
+    const miscellaneous = totalBudget - totalSpent;
 
     let budgetHTML = `
         <div class="budget-item">
@@ -374,7 +322,6 @@ function displayBudgetBreakdown(accommodation, food, transport, activities, tota
         </div>
     `;
 
-    // Only show "Remaining" if it's positive
     if (miscellaneous >= 0) {
          budgetHTML += `
          <div class="budget-item" style="background: #e6ffed; border-left: 4px solid #52c41a;">
@@ -383,7 +330,6 @@ function displayBudgetBreakdown(accommodation, food, transport, activities, tota
         </div>
         `;
     } else {
-        // Show an "Over Budget" warning
          budgetHTML += `
          <div class="budget-item" style="background: #fff1f0; border-left: 4px solid #f5222d;">
             <span class="budget-category">🔥 Over Budget By</span>
@@ -408,8 +354,6 @@ function displayBudgetBreakdown(accommodation, food, transport, activities, tota
     document.getElementById('budgetBreakdown').style.display = 'block';
 }
 
-// --- Hook form submit ---
-// This ensures the DOM is loaded before trying to find the form
 document.addEventListener('DOMContentLoaded', () => {
     const travelForm = document.getElementById('travelForm');
     if (travelForm) {
