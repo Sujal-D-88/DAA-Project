@@ -278,12 +278,7 @@ function displayItinerary(selectedItems, duration, totalValue, totalCost, numAct
                 <li><strong>Algorithm Used:</strong> 0/1 Knapsack (Dynamic Programming)</li>
                 <li><strong>Goal:</strong> Maximize total "value" of activities within the activity budget.</li>
                 <li><strong>Time Complexity:</strong> O(N * W)</li>
-                <li style="margin-top: 5px;">
-                    - <strong>N</strong> (Items): ${numActivities} (Total activities fetched from AI)
-                </li>
-                <li>
-                    - <strong>W</strong> (Capacity): ₹${activityBudget} (Your remaining activity budget)
-                </li>
+                
                 <li style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
                     <strong>Total Value Scored:</strong> ${totalValue}
                 </li>
