@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Travel Planner</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+
+    <div class="landing-page" id="landingPage">
+        <img src="logo.png" alt="Budget Travel Planner Logo" class="logo"> 
+        <h1 class="site-name">Budget Travel Planner</h1>
+        <p class="tagline">Explore the World Without Breaking the Bank</p>
+        <button class="explore-btn" onclick="showMainPage()">Explore</button>
+    </div>
+
+    <nav class="navbar" id="appNavbar" style="display: none;">
+        <div class="navbar-logo">
+            <img src="logo.png" alt="Logo">
+            <span>Budget Travel Planner</span>
+        </div>
+        <ul class="navbar-links">
+            <li><a href="#" onclick="showMainPage(); return false;">New Plan</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-page-content" id="mainPageContent" style="display: none;">
+        <div class="container">
+            <div class="header">
+                <h1>Plan Your Perfect Trip</h1>
+                <p>Fill in the details below and let us create the best budget-friendly itinerary for you</p>
+            </div>
+
+            <form id="travelForm" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label for="destination">Destination *</label>
+                    <input type="text" id="destination" name="destination" placeholder="Where do you want to go?" required>
+                </div>
+                <div class="form-group">
+                    <label for="duration">Duration (Days) *</label>
+                    <input type="number" id="duration" name="duration" placeholder="Number of days" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="budget">Total Budget (₹) *</label>
+                    <input type="number" id="budget" name="budget" placeholder="Enter your budget" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="travelers">Number of Travelers *</label>
+                    <input type="number" id="travelers" name="travelers" placeholder="How many people?" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="travelType">Travel Type *</label>
+                    <select id="travelType" name="travelType" required>
+                        <option value="">Select travel type</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="relaxation">Relaxation</option>
+                        <option value="cultural">Cultural</option>
+                        <option value="family">Family</option>
+                        <option value="romantic">Romantic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="accommodation">Accommodation Preference</label>
+                    <select id="accommodation" name="accommodation">
+                        <option value="budget">Budget (Hostels, Budget Hotels)</option>
+                        <option value="mid-range">Mid-range (3-star Hotels)</option>
+                        <option value="luxury">Luxury (4-5 star Hotels)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="specificSpots">Specific Places/Attractions (Optional)</label>
+                    <textarea id="specificSpots" name="specificSpots" placeholder="List any specific places you want to visit (e.g., museums, landmarks, beaches)"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="preferences">Additional Preferences (Optional)</label>
+                    <textarea id="preferences" name="preferences" placeholder="Any dietary restrictions, accessibility needs, or special requests?"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Generate My Itinerary</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="results-page-content" id="resultsPageContent" style="display: none;">
+        <div class="results-container">
+            <div class="results-header">
+                <h2>Your Optimized Travel Plan</h2>
+                <p>Here's your budget-friendly itinerary generated using the 0/1 Knapsack algorithm</p>
+            </div>
+
+            <div class="trip-summary">
+                <h3>Trip Summary</h3>
+                <div id="summaryContent"></div>
+            </div>
+
+            <div class="trip-summary">
+                <h3>Day-by-Day Itinerary</h3>
+                <div id="itineraryContent" class="loading">
+                    Processing your request...
+                </div>
+            </div>
+
+            <div class="budget-breakdown" id="budgetBreakdown" style="display: none;">
+                <h3>Budget Breakdown</h3>
+                <div id="budgetContent"></div>
+            </div>
+
+            <button class="back-btn" onclick="showMainPage()">Plan Another Trip</button>
+        </div>
+    </div>
+
+    <script src="budget_planner.js"></script>
+</body>
+</html>
